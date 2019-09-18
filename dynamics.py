@@ -65,8 +65,11 @@ class Dynamics(object):
         return tf.reduce_mean((x - tf.stop_gradient(self.out_features)) ** 2, -1)
 
     def calculate_loss(self, ob, last_ob, acs):
-        n_chunks = 8
+        print('-------INSIDE CALCULATE LOSS------')
+        n_chunks = 1
         n = ob.shape[0]
+        print(n)
+        #assert 1==2
         chunk_size = n // n_chunks
         assert n % n_chunks == 0
         sli = lambda i: slice(i * chunk_size, (i + 1) * chunk_size)

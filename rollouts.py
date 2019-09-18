@@ -52,7 +52,9 @@ class Rollout(object):
     def collect_rollout(self):
         self.ep_infos_new = []
         for t in range(self.nsteps):
+            #print('-------INSIDE COLLECT ROLLOUT-------')
             self.rollout_step()
+        #print('-------CALCULATE REWARD-----')
         self.calculate_reward()
         self.update_info()
 

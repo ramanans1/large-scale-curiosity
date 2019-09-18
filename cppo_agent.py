@@ -88,12 +88,19 @@ class PpoOptimizer(object):
         self.all_visited_rooms = []
         self.all_scores = []
         self.nenvs = nenvs = len(env_fns)
+        print('-------NENVS-------',self.nenvs)
         self.nlump = nlump
+        print('----------NLUMPS-------',self.nlump)
         self.lump_stride = nenvs // self.nlump
+        print('-------LSTRIDE----',self.lump_stride)
+        print('--------OBS SPACE ---------',self.ob_space)
+        print('-------------AC SPACE-----',self.ac_space)
+        #assert 1==2
+        print('-----BEFORE VEC ENV------')
         self.envs = [
             VecEnv(env_fns[l * self.lump_stride: (l + 1) * self.lump_stride], spaces=[self.ob_space, self.ac_space]) for
             l in range(self.nlump)]
-
+        print('-----AFTER VEC ENV------')
         self.rollout = Rollout(ob_space=self.ob_space, ac_space=self.ac_space, nenvs=nenvs,
                                nsteps_per_seg=self.nsteps_per_seg,
                                nsegs_per_env=self.nsegs_per_env, nlumps=self.nlump,
@@ -212,6 +219,7 @@ class PpoOptimizer(object):
         return info
 
     def step(self):
+        print('---------INSIDE STEP--------------')
         self.rollout.collect_rollout()
         update_info = self.update()
         return {'update': update_info}

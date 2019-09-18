@@ -260,6 +260,9 @@ class OneChannel(gym.ObservationWrapper):
     def __init__(self, env, crop=True):
         self.crop = crop
         super(OneChannel, self).__init__(env)
+        print(env.observation_space.dtype)
+        print(env.observation_space)
+        #assert 1==2
         assert env.observation_space.dtype == np.uint8
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)
 
@@ -338,6 +341,36 @@ def make_robo_pong(frame_stack=True):
     env = AddRandomStateToInfo(env)
     return env
 
+
+def make_dm_suite(frame_stack=True,tasks = 'cheetah_run'):
+    from baselines.common.atari_wrappers import FrameStack
+    import roboenvs as robo
+    import roboenvs.dm_suite_envs as dm_suite
+    #env = [getattr(dm_wrap,name)(config,params) for name in tasks]
+    action_repeat = 4
+    max_length = 1000 // action_repeat
+    state_components = ['reward', 'position', 'velocity']
+    env = robo.make_cheetah()
+    print(env.action_space)
+    print('---------')
+    #assert 1==2
+    env = dm_suite.ActionRepeat(env, action_repeat)
+    #env = dm_suite.MaximumDuration(env, max_length)
+    env = dm_suite.PixelObservations(env, (84, 84), np.uint8, 'image')
+    env = dm_suite.ConvertTo32Bit(env)
+    env = dm_suite.ConcatObservation(env, ['image'])
+    env = dm_suite.DiscretizeActionWrapper(env, 2)
+    #print(env.action_space.nvec)
+    #assert 1==2
+    env = dm_suite.MultiDiscreteToUsual(env)
+    #print(env.action_space.nvec)
+    #assert 1==2
+    env = OneChannel(env)
+    if frame_stack:
+       env = FrameStack(env, 4)
+    #env = AddRandomStateToInfo(env)
+    #print("----BUILT ENVIRONMENT EXITING NOW -------")
+    return env
 
 def make_robo_hockey(frame_stack=True):
     from baselines.common.atari_wrappers import FrameStack
