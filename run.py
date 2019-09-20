@@ -22,6 +22,7 @@ from utils import random_agent_ob_mean_std
 from wrappers import MontezumaInfoWrapper, make_dm_suite, make_mario_env, make_robo_pong, make_robo_hockey, \
     make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit
 
+import datetime
 
 def start_experiment(**args):
     make_env = partial(make_env_all_params, add_monitor=True, args=args)
