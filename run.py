@@ -170,9 +170,11 @@ def get_experiment_environment(**args):
     set_global_seeds(process_seed)
     setup_mpi_gpus()
 
-    logger_context = logger.scoped_configure(dir=None,
+    logger_context = logger.scoped_configure(dir='./logs/' +
+                                                 datetime.datetime.now().strftime(args["expID"] + "-openai-%Y-%m-%d-%H-%M-%S-%f"),
                                              format_strs=['stdout', 'log',
-                                                          'csv'] if MPI.COMM_WORLD.Get_rank() == 0 else ['log'])
+                                                          'csv', 'tensorboard']
+                                             if MPI.COMM_WORLD.Get_rank() == 0 else ['log'])
     tf_context = setup_tensorflow_session()
     return logger_context, tf_context
 

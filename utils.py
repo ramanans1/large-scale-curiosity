@@ -108,6 +108,12 @@ def layernorm(x):
     m, v = tf.nn.moments(x, -1, keep_dims=True)
     return (x - m) / (tf.sqrt(v) + 1e-8)
 
+def get_session(config=None):
+    """Get default session or create one with a given config"""
+    sess = tf.get_default_session()
+    if sess is None:
+        sess = make_session(config=config, make_default=True)
+    return sess
 
 getsess = tf.get_default_session
 
@@ -224,4 +230,3 @@ def tile_images(array, n_cols=None, max_images=None, div=1):
         return np.concatenate([cell(i, j) for j in range(n_cols)], axis=1)
 
     return np.concatenate([row(i) for i in range(n_rows)], axis=0)
-

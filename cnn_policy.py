@@ -1,7 +1,9 @@
 import tensorflow as tf
 from baselines.common.distributions import make_pdtype
+from baselines.common.tf_utils import load_variables, save_variables
+import functools 
 
-from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim
+from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim, get_session
 
 
 class CnnPolicy(object):
@@ -13,6 +15,9 @@ class CnnPolicy(object):
         self.nl = nl
         self.ob_mean = ob_mean
         self.ob_std = ob_std
+        self.sess = sess = get_session()
+        self.save = functools.partial(save_variables,sess=sess)
+        self.load = functools.partial(load_variables,sess=sess)
         with tf.variable_scope(scope):
             self.ob_space = ob_space
             self.ac_space = ac_space
