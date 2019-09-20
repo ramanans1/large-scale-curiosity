@@ -1,7 +1,7 @@
 import tensorflow as tf
 from baselines.common.distributions import make_pdtype
-from baselines.common.tf_utils import load_variables, save_variables
-import functools 
+from baselines.common.tf_util import load_variables, save_variables
+import functools
 
 from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim, get_session
 
