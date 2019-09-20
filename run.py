@@ -22,6 +22,8 @@ from utils import random_agent_ob_mean_std
 from wrappers import MontezumaInfoWrapper, make_dm_suite, make_mario_env, make_robo_pong, make_robo_hockey, \
     make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit
 
+import datetime
+
 def start_experiment(**args):
     make_env = partial(make_env_all_params, add_monitor=True, args=args)
 
@@ -169,7 +171,7 @@ def get_experiment_environment(**args):
     set_global_seeds(process_seed)
     setup_mpi_gpus()
 
-    logger_context = logger.scoped_configure(dir='./logs/' +
+    logger_context = logger.scoped_configure(dir='./'+args["logdir"]+'/' +
                                                  datetime.datetime.now().strftime(args["expID"] + "-openai-%Y-%m-%d-%H-%M-%S-%f"),
                                              format_strs=['stdout', 'log',
                                                           'csv', 'tensorboard']
@@ -222,6 +224,8 @@ if __name__ == '__main__':
     parser.add_argument('--layernorm', type=int, default=0)
     parser.add_argument('--feat_learning', type=str, default="none",
                         choices=["none", "idf", "vaesph", "vaenonsph", "pix2pix"])
+    parser.add_argument('--expID',type=str,default='0001')
+    parser.add_argument('--logdir',type=str,default='logs')
 
     args = parser.parse_args()
 
