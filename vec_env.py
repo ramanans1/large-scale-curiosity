@@ -5,6 +5,7 @@ An interface for asynchronous vectorized environments.
 import ctypes
 from abc import ABC, abstractmethod
 from multiprocessing import Pipe, Array, Process
+import multiprocessing
 
 import gym
 import numpy as np
@@ -109,6 +110,7 @@ class ShmemVecEnv(VecEnv):
         If you don't specify observation_space, we'll have to create a dummy
         environment to get it.
         """
+        multiprocessing.set_start_method('spawn')
         if spaces:
             observation_space, action_space = spaces
         else:

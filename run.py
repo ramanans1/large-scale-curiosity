@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#import os
+#os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+
 try:
     from OpenGL import GLU
 except:

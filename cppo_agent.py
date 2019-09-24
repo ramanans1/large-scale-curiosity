@@ -158,7 +158,7 @@ class PpoOptimizer(object):
             vpredstd=self.rollout.buf_vpreds.std(),
             ev=explained_variance(self.rollout.buf_vpreds.ravel(), self.buf_rets.ravel()),
             rew_mean=np.mean(self.rollout.buf_rews),
-            recent_best_ext_ret=self.rollout.current_max
+            recent_best_ext_ret=self.rollout.current_max if self.rollout.current_max is not None else 0,
         )
         if self.rollout.best_ext_ret is not None:
             info['best_ext_ret'] = self.rollout.best_ext_ret
