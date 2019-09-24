@@ -24,6 +24,13 @@ register(
     tags={"pg_complexity": 20 * 1000000},
 )
 
+register(
+    id='WalkerWalk-v1',
+    entry_point='roboenvs.dm_suite_envs:WalkerWalk',
+    max_episode_steps = 1000//2,
+    tags={"pg_complexity": 20 * 1000000},
+)
+
 def make_robopong():
     return gym.make("RoboschoolPong-v2")
 
@@ -31,43 +38,18 @@ def make_robopong():
 def make_robohockey():
     return gym.make("RoboschoolHockey-v1")
 
-def make_cheetah():
-
+def make_cheetah_run():
+    env_param = {}
+    env_param["action_repeat"] = 4
+    env_param["max_length"] = 1000 // env_param["action_repeat"]
+    env_param["state_components"] = ['reward', 'position', 'velocity']
     env = gym.make("CheetahRun-v1")
-    # from dm_control import suite
-    # import matplotlib.pyplot as plt
-    # import numpy as np
-    #
-    # max_frame = 90
-    #
-    # width = 480
-    # height = 480
-    # video = np.zeros((90, height, width, 3), dtype=np.uint8)
-    #
-    # # Load one task:
-    # #env = suite.load(domain_name="cartpole", task_name="swingup")
-    #
-    # # Step through an episode and print out reward, discount and observation.
-    # # action_spec = env.action_spec()
-    # #time_step = env.reset()
-    # #while not time_step.last():
-    # env.reset()
-    # for i in range(max_frame):
-    # # action = np.random.uniform(action_spec.minimum,
-    # #                          action_spec.maximum,
-    # #                          size=action_spec.shape)
-    # # time_step = env.step(action)
-    #     env.step(env.action_space.sample())
-    #     #env.physics.render(480,480,camera_id=1)
-    #     img = plt.imshow(env.render())
-    #     plt.pause(0.01)
-    #     plt.draw()
-    #     #video[i] = np.hstack([env.physics.render(height, width, camera_id=0),
-    #     #                  env.physics.render(height, width, camera_id=1)])
-    # #print(time_step.reward, time_step.discount, time_step.observation)
-    # # for i in range(max_frame):
-    # #     img = plt.imshow(video[i])
-    # #     plt.pause(0.01)  # Need min display time > 0.0.
-    # #     plt.draw()
-    # assert 1==2
-    return env
+    return env, env_param
+
+def make_walker_walk():
+    env_param = {}
+    env_param["action_repeat"] = 2
+    env_param["max_length"] = 1000 // env_param["action_repeat"]
+    env_param["state_components"] = ['reward', 'height', 'orientations', 'velocity']
+    env = gym.make("WalkerWalk-v1")
+    return env,env_param

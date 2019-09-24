@@ -144,24 +144,11 @@ def make_env_all_params(rank, add_monitor, args):
         elif args["env"] == "hockey":
             env = make_robo_hockey()
     elif args["env_kind"] == "dm_suite":
-        env = make_dm_suite()
+        env = make_dm_suite(task=args["env"])
 
     if add_monitor:
         env = Monitor(env, osp.join(logger.get_dir(), '%.2i' % rank))
-    # print("----SPEC---------")
-    # print(env.spec)
-    # print(env.spec.id)
-    #assert 1==2
-    # import matplotlib.pyplot as plt
-    # env.reset()
-    # for _ in range(1000):
-    #     img = plt.imshow(env.render())
-    #     plt.pause(0.01)
-    #     plt.draw()
-    #     env.step(env.action_space.sample()) # take a random action
-    #     #print(a)
-    # env.close()
-    # assert 1==2
+
     return env
 
 
@@ -206,7 +193,7 @@ def add_optimization_params(parser):
 def add_rollout_params(parser):
     parser.add_argument('--nsteps_per_seg', type=int, default=128)
     parser.add_argument('--nsegs_per_env', type=int, default=1)
-    parser.add_argument('--envs_per_process', type=int, default=1)
+    parser.add_argument('--envs_per_process', type=int, default=128)
     parser.add_argument('--nlumps', type=int, default=1)
 
 

@@ -25,16 +25,6 @@ from dm_control import suite
 Task = collections.namedtuple(
     'Task', 'name, env_ctor, max_length, state_components')
 
-
-def dummy(config, params):
-  action_repeat = params.get('action_repeat', 1)
-  max_length = 1000 // action_repeat
-  state_components = ['reward']
-  env_ctor = lambda: control.wrappers.ActionRepeat(
-      control.DummyEnv, action_repeat)
-  return Task('dummy', env_ctor, max_length, state_components)
-
-
 def cartpole_balance(config, params):
   action_repeat = params.get('action_repeat', 8)
   max_length = 1000 // action_repeat
@@ -63,16 +53,6 @@ def finger_spin(config, params):
       _dm_control_env, action_repeat, max_length, 'finger', 'spin', params)
   return Task('finger_spin', env_ctor, max_length, state_components)
 
-
-def cheetah_run(params):
-  action_repeat = params.get('action_repeat', 4)
-  max_length = 1000 // action_repeat
-  state_components = ['reward', 'position', 'velocity']
-  env_ctor = _dm_control_env(action_repeat,max_length, 'cheetah', 'run', params)
-
-  return env_ctor
-
-
 def cup_catch(config, params):
   action_repeat = params.get('action_repeat', 4)
   max_length = 1000 // action_repeat
@@ -81,16 +61,6 @@ def cup_catch(config, params):
       _dm_control_env, action_repeat, max_length, 'ball_in_cup', 'catch',
       params)
   return Task('cup_catch', env_ctor, max_length, state_components)
-
-
-def walker_walk(config, params):
-  action_repeat = params.get('action_repeat', 2)
-  max_length = 1000 // action_repeat
-  state_components = ['reward', 'height', 'orientations', 'velocity']
-  env_ctor = tools.bind(
-      _dm_control_env, action_repeat, max_length, 'walker', 'walk', params)
-  return Task('walker_walk', env_ctor, max_length, state_components)
-
 
 def reacher_easy(config, params):
   action_repeat = params.get('action_repeat', 4)
@@ -178,7 +148,19 @@ class DeepMindWrapper(gym.Env):
 class CheetahRun(DeepMindWrapper):
     def __init__(self):
         ee = suite.load('cheetah','run')
-        print('---INSIDE CHEETAH WRAPPER----')
+        print('---INSIDE MAIN WRAPPER----')
+        DeepMindWrapper.__init__(self,ee,(84,84),camera_id=0)
+    def reset(self):
+        return DeepMindWrapper.reset(self)
+    def step(self,action):
+        return DeepMindWrapper.step(self,action)
+    def render(self,mode='rgb_array'):
+        return DeepMindWrapper.render(self)
+
+class WalkerWalk(DeepMindWrapper):
+    def __init__(self):
+        ee = suite.load('walker','walk')
+        print('---INSIDE MAIN WRAPPER----')
         DeepMindWrapper.__init__(self,ee,(84,84),camera_id=0)
     def reset(self):
         return DeepMindWrapper.reset(self)
@@ -189,19 +171,6 @@ class CheetahRun(DeepMindWrapper):
 '''
 ADDING WRAPPER CLASSES FROM PLANET/CONTROL/WRAPPERS.PY
 '''
-# Copyright 2019 The PlaNet Authors. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 """Environment wrappers."""
 
