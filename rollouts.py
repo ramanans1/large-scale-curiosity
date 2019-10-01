@@ -40,7 +40,8 @@ class Rollout(object):
         # self.prev_acs = [None for _ in range(self.nlumps)]
         self.int_rew = np.zeros((nenvs,), np.float32)
 
-        self.recorder = Recorder(nenvs=self.nenvs, nlumps=self.nlumps) if record_rollouts else None
+        #self.recorder = Recorder(nenvs=self.nenvs, nlumps=self.nlumps) if record_rollouts else None
+        self.recorder = None
         self.statlists = defaultdict(lambda: deque([], maxlen=100))
         self.stats = defaultdict(float)
         self.best_ext_ret = None

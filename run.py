@@ -23,7 +23,7 @@ from cppo_agent import PpoOptimizer
 from dynamics import Dynamics, UNet
 from utils import random_agent_ob_mean_std
 from wrappers import MontezumaInfoWrapper, make_dm_suite, make_mario_env, make_robo_pong, make_robo_hockey, \
-    make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit
+    make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit, TempMonitor
 
 import datetime
 
@@ -147,7 +147,7 @@ def make_env_all_params(rank, add_monitor, args):
         env = make_dm_suite(task=args["env"])
 
     if add_monitor:
-        env = Monitor(env, osp.join(logger.get_dir(), '%.2i' % rank))
+        env = TempMonitor(env)
 
     return env
 
