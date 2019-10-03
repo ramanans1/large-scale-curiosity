@@ -161,6 +161,11 @@ class ShmemVecEnv(VecEnv):
         obs, rews, dones, infos = zip(*outs)
         return self._decode_obses(obs), np.array(rews), np.array(dones), infos
 
+    def get_env_zero_obs(self):
+        self.parent_pipes[0].send(('obs', None))
+        zero_env_obs = self.parent_pipes[0].recv()
+        return zero_env_obs
+
     def close(self):
         if self.waiting_step:
             self.step_wait()

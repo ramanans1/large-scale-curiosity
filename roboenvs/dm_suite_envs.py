@@ -227,6 +227,7 @@ class ConcatObservation(object):
   def __init__(self, env, keys):
     self._env = env
     self._keys = keys
+    self.last_observation = None
 
   def __getattr__(self, name):
     return getattr(self._env, name)
@@ -246,11 +247,13 @@ class ConcatObservation(object):
   def step(self, action):
     obs, reward, done, info = self._env.step(action)
     obs = self._select_keys(obs)
+    self.last_observation = obs if obs is not None else np.copy(self.last_observation)
     return obs, reward, done, info
 
   def reset(self):
     obs = self._env.reset()
     obs = self._select_keys(obs)
+    self.last_observation = obs
     return obs
 
   def _select_keys(self, obs):
