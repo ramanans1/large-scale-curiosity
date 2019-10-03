@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 import os
-#os.environ["MUJOCO_GL"]='osmesa'
-os.environ["PYOPENGL_PLATFORM"]='osmesa'
-#import os 
-#os.environ['DISABLE_MUJOCO_RENDERING']='1'
+
+os.environ["MUJOCO_GL"] = "osmesa"
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
 
 try:
     from OpenGL import GLU
@@ -97,7 +96,9 @@ class Trainer(object):
             normadv=hps['norm_adv'],
             ext_coeff=hps['ext_coeff'],
             int_coeff=hps['int_coeff'],
-            dynamics=self.dynamics
+            dynamics=self.dynamics,
+            exp_name = hps['exp_name'],
+            env_name = hps['env']
         )
 
         self.agent.to_report['aux'] = tf.reduce_mean(self.feature_extractor.loss)
@@ -117,9 +118,13 @@ class Trainer(object):
         self.agent.start_interaction(self.envs, nlump=self.hps['nlumps'], dynamics=self.dynamics)
         while True:
             info = self.agent.step()
+            #print(info)
+            #assert 1==2
             if info['update']:
                 logger.logkvs(info['update'])
                 logger.dumpkvs()
+                if info['update']['n_updates'] % 5 == 0:
+                    self.policy.save_model(logdir = logger.get_dir(), exp_name = self.hps['exp_name'])
             if self.agent.rollout.stats['tcount'] > self.num_timesteps:
                 break
 
@@ -151,12 +156,7 @@ def make_env_all_params(rank, add_monitor, args):
         env = make_dm_suite(task=args["env"])
 
     if add_monitor:
-        #logdir = './'+args["logdir"]+'/'+'recordrun'+datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
-        logdir = './'+args["logdir"]+'/'+datetime.datetime.now().strftime(args["expID"]+"-openai-%Y-%m-%d-%H-%M-%S-%f")
-        print(logger.get_dir())
-        #env = Monitor(env, osp.join(logdir, '%.2i' % rank))
         env = TempMonitor(env)
-
 
     return env
 

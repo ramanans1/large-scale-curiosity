@@ -87,8 +87,6 @@ def setup_tensorflow_session():
     except tf.errors.NotFoundError:
       return tf.Session(config=tf_config)
 
-
-
 def random_agent_ob_mean_std(env, nsteps=10000):
     ob = np.asarray(env.reset())
     if MPI.COMM_WORLD.Get_rank() == 0:

@@ -2,6 +2,7 @@ import tensorflow as tf
 from baselines.common.distributions import make_pdtype
 #from baselines.common.tf_util import load_variables, save_variables
 import functools
+import os.path as osp
 
 from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim, get_session
 #RS: Seems like should work for continuous action spaces as well 
@@ -67,3 +68,19 @@ class CnnPolicy(object):
             getsess().run([self.a_samp, self.vpred, self.nlp_samp],
                           feed_dict={self.ph_ob: ob[:, None]})
         return a[:, 0], vpred[:, 0], nlp[:, 0]
+
+    def get_ac_value_nlp_eval(self, ob):
+        a, vpred, nlp = getsess().run([self.a_samp, self.vpred, self.nlp_samp],
+                          feed_dict={self.ph_ob: ((ob,),)})
+        return a[:, 0], vpred[:, 0], nlp[:, 0]
+
+    def save_model(self, logdir, exp_name):
+        self.saver = tf.train.Saver()
+        path = osp.join(logdir,exp_name+".ckpt")
+        self.saver.save(getsess(), path)
+        print("Model saved to path",path)
+
+    def restore_model(self, logdir, exp_name):
+        path = osp.join(logdir,exp_name+".ckpt")
+        self.saver = tf.train.Saver()
+        self.saver.restore(getsess(), path)
