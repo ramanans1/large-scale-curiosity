@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-#import os
-#os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+import os
+#os.environ["MUJOCO_GL"]='osmesa'
+os.environ["PYOPENGL_PLATFORM"]='osmesa'
+#import os 
+#os.environ['DISABLE_MUJOCO_RENDERING']='1'
 
 try:
     from OpenGL import GLU
@@ -23,9 +26,10 @@ from cppo_agent import PpoOptimizer
 from dynamics import Dynamics, UNet
 from utils import random_agent_ob_mean_std
 from wrappers import MontezumaInfoWrapper, make_dm_suite, make_mario_env, make_robo_pong, make_robo_hockey, \
-    make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit
+    make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit, TempMonitor
 
 import datetime
+import multiprocessing
 
 def start_experiment(**args):
     make_env = partial(make_env_all_params, add_monitor=True, args=args)
@@ -147,7 +151,12 @@ def make_env_all_params(rank, add_monitor, args):
         env = make_dm_suite(task=args["env"])
 
     if add_monitor:
-        env = Monitor(env, osp.join(logger.get_dir(), '%.2i' % rank))
+        #logdir = './'+args["logdir"]+'/'+'recordrun'+datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S-%f")
+        logdir = './'+args["logdir"]+'/'+datetime.datetime.now().strftime(args["expID"]+"-openai-%Y-%m-%d-%H-%M-%S-%f")
+        print(logger.get_dir())
+        #env = Monitor(env, osp.join(logdir, '%.2i' % rank))
+        env = TempMonitor(env)
+
 
     return env
 
@@ -204,7 +213,7 @@ if __name__ == '__main__':
     add_environments_params(parser)
     add_optimization_params(parser)
     add_rollout_params(parser)
-
+    multiprocessing.set_start_method('spawn')
     parser.add_argument('--exp_name', type=str, default='')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--dyn_from_pixels', type=int, default=0)

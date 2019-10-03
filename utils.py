@@ -81,7 +81,12 @@ def setup_tensorflow_session():
         inter_op_parallelism_threads=num_cpu,
         intra_op_parallelism_threads=num_cpu
     )
-    return tf.Session(config=tf_config)
+    tf_config.gpu_options.allow_growth = True
+    try:
+      return tf.Session('local', config=tf_config)
+    except tf.errors.NotFoundError:
+      return tf.Session(config=tf_config)
+
 
 
 def random_agent_ob_mean_std(env, nsteps=10000):
