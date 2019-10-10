@@ -58,7 +58,8 @@ class Trainer(object):
             ob_mean=self.ob_mean,
             ob_std=self.ob_std,
             layernormalize=False,
-            nl=tf.nn.leaky_relu)
+            nl=tf.nn.leaky_relu,
+            ac_range = [self.ac_space_min, self.ac_space_max])
 
         self.feature_extractor = {"none": FeatureExtractor,
                                   "idf": InverseDynamics,
@@ -73,7 +74,7 @@ class Trainer(object):
         self.dynamics = Dynamics if hps['feat_learning'] != 'pix2pix' else UNet
         self.dynamics = self.dynamics(auxiliary_task=self.feature_extractor,
                                       predict_from_pixels=hps['dyn_from_pixels'],
-                                      feat_dim=512)
+                                      feat_dim=512, env_kind=hps['env_kind'])
 
         self.agent = PpoOptimizer(
             scope='ppo',
@@ -107,6 +108,8 @@ class Trainer(object):
 
     def _set_env_vars(self):
         env = self.make_env(0, add_monitor=False)
+        assert self.hps['env_kind'] == "dm_suite" #Current code only runs with dm_suite, because of added action space min and max for clipping 
+        self.ac_space_min, self.ac_space_max = env.ac_space_min , env.ac_space_max
         self.ob_space, self.ac_space = env.observation_space, env.action_space
         self.ob_mean, self.ob_std = random_agent_ob_mean_std(env)
         del env
@@ -114,6 +117,8 @@ class Trainer(object):
 
     def train(self):
         self.agent.start_interaction(self.envs, nlump=self.hps['nlumps'], dynamics=self.dynamics)
+        if self.hps['ckptpath'] is not None:
+            self.agent.restore_model(logdir = self.hps['ckptpath'], exp_name = self.hps['exp_name'])
         while True:
             info = self.agent.step()
             #print(info)
@@ -122,7 +127,7 @@ class Trainer(object):
                 logger.logkvs(info['update'])
                 logger.dumpkvs()
                 if info['update']['n_updates'] % 5 == 0:
-                    self.policy.save_model(logdir = logger.get_dir(), exp_name = self.hps['exp_name'])
+                    self.agent.save_model(logdir = logger.get_dir(), exp_name = self.hps['exp_name'], global_step = info['update']['n_updates'])
             if self.agent.rollout.stats['tcount'] > self.num_timesteps:
                 break
 
@@ -223,6 +228,7 @@ if __name__ == '__main__':
                         choices=["none", "idf", "vaesph", "vaenonsph", "pix2pix"])
     parser.add_argument('--expID',type=str,default='0001')
     parser.add_argument('--logdir',type=str,default='logs')
+    parser.add_argument('--ckptpath',type=str,default=None)
 
     args = parser.parse_args()
 

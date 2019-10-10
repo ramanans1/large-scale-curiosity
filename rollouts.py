@@ -56,8 +56,9 @@ class Rollout(object):
 
     def collect_rollout(self):
         self.ep_infos_new = []
+        print(self.nsteps)
         for t in range(self.nsteps):
-            #print('-------INSIDE COLLECT ROLLOUT-------')
+            #print('-------INSIDE COLLECT ROLLOUT-------',t)
             self.rollout_step()
         #print('-------CALCULATE REWARD-----')
         self.calculate_reward()
@@ -95,6 +96,9 @@ class Rollout(object):
             sli = slice(l * self.lump_stride, (l + 1) * self.lump_stride)
 
             acs, vpreds, nlps = self.policy.get_ac_value_nlp(obs)
+            #print('---ACS----',acs)
+            #print('--VPRED---',vpreds)
+            #print('--NLPS---',nlps)
             self.env_step(l, acs)
 
             # self.prev_feat[l] = dyn_feat

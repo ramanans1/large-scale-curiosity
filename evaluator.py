@@ -48,7 +48,8 @@ class Evaluator(object):
             out = cv2.VideoWriter(vid_file,cv2.VideoWriter_fourcc(*'DIVX'), 15, (84,84))
             for j in range(len(ep_images)):
                 image_file = os.path.join(dirname, image_folder, self.exp_name +"_{}_{}_{}_".format(ep_num, i, j) + ".png")
-                #print('--EPLEN--',len(ep_images))
+                print('--EPLEN--',len(ep_images))
+                #assert 1==2
                 #print(ep_images[j])
                 #assert 1==2
                 out.write(ep_images[j])

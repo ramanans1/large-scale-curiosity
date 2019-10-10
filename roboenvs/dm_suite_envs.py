@@ -122,10 +122,15 @@ class DeepMindWrapper(gym.Env):
   @property
   def action_space(self):
     action_spec = self._env.action_spec()
+    self.ac_space_min = action_spec.minimum
+    self.ac_space_max = action_spec.maximum
     return gym.spaces.Box(
         action_spec.minimum, action_spec.maximum, dtype=np.float32)
 
   def step(self, action):
+    action_spec = self._env.action_spec()
+    #action = np.clip(action,action_spec.minimum,action_spec.maximum)
+    #print('----ACWRAP----',action)
     time_step = self._env.step(action)
     obs = dict(time_step.observation)
     reward = time_step.reward or 0
