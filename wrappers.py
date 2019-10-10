@@ -428,12 +428,12 @@ def make_dm_suite(frame_stack=True,task = 'cheetah_run'):
     max_length = env_param["max_length"]
     state_components = env_param["state_components"]
     env = dm_suite.ActionRepeat(env, action_repeat)
-    env = dm_suite.MaximumDuration(env, max_length)
+    #env = dm_suite.MaximumDuration(env, max_length)
     env = dm_suite.PixelObservations(env, (84, 84), np.uint8, 'image')
     env = dm_suite.ConvertTo32Bit(env)
     env = dm_suite.ConcatObservation(env, ['image'])
-    env = dm_suite.DiscretizeActionWrapper(env, 2)
-    env = dm_suite.MultiDiscreteToUsual(env)
+    #env = dm_suite.DiscretizeActionWrapper(env, 2)
+    #env = dm_suite.MultiDiscreteToUsual(env)
     env = OneChannel(env)
     if frame_stack:
        env = FrameStack(env, 4)

@@ -116,6 +116,8 @@ class Trainer(object):
 
     def train(self):
         self.agent.start_interaction(self.envs, nlump=self.hps['nlumps'], dynamics=self.dynamics)
+        if self.hps['ckptpath'] is not None:
+            self.policy.restore_model(logdir = self.hps['ckptpath'], exp_name = self.hps['exp_name'])
         while True:
             info = self.agent.step()
             #print(info)
@@ -225,6 +227,8 @@ if __name__ == '__main__':
                         choices=["none", "idf", "vaesph", "vaenonsph", "pix2pix"])
     parser.add_argument('--expID',type=str,default='0001')
     parser.add_argument('--logdir',type=str,default='logs')
+    parser.add_argument('--ckptpath',type=str,default=None)
+
 
     args = parser.parse_args()
 

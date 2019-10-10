@@ -20,14 +20,14 @@ register(
 register(
     id='CheetahRun-v1',
     entry_point='roboenvs.dm_suite_envs:CheetahRun',
-    max_episode_steps = 1000//4,
+    max_episode_steps = 1000,
     tags={"pg_complexity": 20 * 1000000},
 )
 
 register(
     id='WalkerWalk-v1',
     entry_point='roboenvs.dm_suite_envs:WalkerWalk',
-    max_episode_steps = 1000//2,
+    max_episode_steps = 1000,
     tags={"pg_complexity": 20 * 1000000},
 )
 
