@@ -44,7 +44,11 @@ class Dynamics(object):
     def get_loss(self):
         ac = self.ac if self.continuous else tf.one_hot(self.ac, self.ac_space.n, axis=2)
         sh = tf.shape(ac)
+        #assert 1==2
+        #print('-------SH----------',sh)
         ac = flatten_two_dims(ac)
+        #print('-----SHP-------',tf.shape(ac))
+        #assert 1==2
 
         def add_ac(x):
             return tf.concat([x, ac], axis=-1)
@@ -62,7 +66,10 @@ class Dynamics(object):
                 x = residual(x)
             n_out_features = self.out_features.get_shape()[-1].value
             x = tf.layers.dense(add_ac(x), n_out_features, activation=None)
+            #print('--------BEF SHAPE-------',tf.shape(x))
             x = unflatten_first_dim(x, sh)
+            #print('--------AFT SHAPE-------',tf.shape(x))
+            #assert 1==2
         return tf.reduce_mean((x - tf.stop_gradient(self.out_features)) ** 2, -1)
 
     def calculate_loss(self, ob, last_ob, acs):

@@ -6,7 +6,7 @@ import os.path as osp
 import numpy as np
 
 from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim, get_session
-
+#RS: Seems like should work for continuous action spaces as well 
 
 class CnnPolicy(object):
     def __init__(self, ob_space, ac_space, hidsize,
@@ -21,7 +21,7 @@ class CnnPolicy(object):
         with tf.variable_scope(scope):
             self.ob_space = ob_space
             self.ac_space = ac_space
-            self.ac_pdtype = make_pdtype(ac_space)
+            self.ac_pdtype = make_pdtype(ac_space) #RS: Should give a continuous action space, given  a continuous action env
             self.ph_ob = tf.placeholder(dtype=tf.int32,
                                         shape=(None, None) + ob_space.shape, name='ob')
             self.ph_ac = self.ac_pdtype.sample_placeholder([None, None], name='ac')

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+
 os.environ["MUJOCO_GL"] = "glfw"
 #os.environ["PYOPENGL_PLATFORM"] = "osmesa"
 
@@ -27,6 +28,7 @@ from wrappers import MontezumaInfoWrapper, make_dm_suite, make_mario_env, make_r
     make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit, TempMonitor
 
 import datetime
+import multiprocessing
 
 def start_experiment(**args):
     make_env = partial(make_env_all_params, add_monitor=True, args=args)
@@ -108,7 +110,7 @@ class Trainer(object):
 
     def _set_env_vars(self):
         env = self.make_env(0, add_monitor=False)
-        assert self.hps['env_kind'] == "dm_suite" #Current code only runs with dm_suite, because of added action space min and max for clipping 
+        assert self.hps['env_kind'] == "dm_suite" #Current code only runs with dm_suite, because of added action space min and max for clipping
         self.ac_space_min, self.ac_space_max = env.ac_space_min , env.ac_space_max
         self.ob_space, self.ac_space = env.observation_space, env.action_space
         self.ob_mean, self.ob_std = random_agent_ob_mean_std(env)
@@ -216,7 +218,7 @@ if __name__ == '__main__':
     add_environments_params(parser)
     add_optimization_params(parser)
     add_rollout_params(parser)
-
+    multiprocessing.set_start_method('spawn')
     parser.add_argument('--exp_name', type=str, default='')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--dyn_from_pixels', type=int, default=0)
