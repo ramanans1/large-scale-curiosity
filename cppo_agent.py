@@ -12,6 +12,7 @@ from rollouts import Rollout
 from utils import bcast_tf_vars_from_root, get_mean_and_std
 from vec_env import ShmemVecEnv as VecEnv
 from evaluator import Evaluator
+import os.path as osp
 
 getsess = tf.get_default_session
 
@@ -81,7 +82,21 @@ class PpoOptimizer(object):
             trainer = MpiAdamOptimizer(learning_rate=self.ph_lr, comm=MPI.COMM_WORLD)
         else:
             trainer = tf.train.AdamOptimizer(learning_rate=self.ph_lr)
+
+        #gvs = trainer.compute_gradients(self.total_loss, params)
+        #self.gshape = gs
+        #gs = [g for (g,v) in gvs]
+        #self.normg = tf.linalg.global_norm(gs)
+        #new_g = [tf.clip_by_norm(g,10.0) for g in gs]
+        #self.nnormg = tf.linalg.global_norm(new_g)
         gradsandvars = trainer.compute_gradients(self.total_loss, params)
+        def ClipIfNotNone(grad):
+            if grad is None:
+                return grad
+            return tf.clip_by_value(grad, -25, 25)
+        #new_g = [ClipIfNotNone(g) for (g,v) in gvs]
+        #self.nnormg = tf.linalg.global_norm(new_g)
+        gradsandvars = [(ClipIfNotNone(grad), var) for grad, var in gradsandvars]
         self._train = trainer.apply_gradients(gradsandvars)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
@@ -124,6 +139,7 @@ class PpoOptimizer(object):
         self.step_count = 0
         self.t_last_update = time.time()
         self.t_start = time.time()
+        self.saver = tf.train.Saver(max_to_keep=5)
 
     def stop_interaction(self):
         for env in self.envs:
@@ -194,7 +210,7 @@ class PpoOptimizer(object):
              self.rollout.buf_obs_last.reshape([self.nenvs * self.nsegs_per_env, 1, *self.ob_space.shape]))
         ])
         mblossvals = []
-
+        #gradvals = []
         for _ in range(self.nepochs):
             np.random.shuffle(envinds)
             for start in range(0, self.nenvs * self.nsegs_per_env, envsperbatch):
@@ -203,6 +219,12 @@ class PpoOptimizer(object):
                 fd = {ph: buf[mbenvinds] for (ph, buf) in ph_buf}
                 fd.update({self.ph_lr: self.lr, self.ph_cliprange: self.cliprange})
                 mblossvals.append(getsess().run(self._losses + (self._train,), fd)[:-1])
+                #print(fd)
+                #print(tf.get_default_session().run([self.normg,self.nnormg], fd))
+                #_ = getsess().run(self.gradsandvars, fd)[:-1]
+                #assert 1==2
+                #gradvals.append(getsess().run(self.grads, fd))
+
 
         mblossvals = [mblossvals[0]]
         info.update(zip(['opt_' + ln for ln in self.loss_names], np.mean([mblossvals[0]], axis=0)))
@@ -233,6 +255,15 @@ class PpoOptimizer(object):
     def set_var_values(self, vv):
         self.stochpol.set_var_values(vv)
 
+    def save_model(self, logdir, exp_name, global_step=0):
+        path = osp.join(logdir,exp_name+".ckpt")
+        self.saver.save(getsess(), path, global_step=global_step)
+        print("Model saved to path",path)
+
+    def restore_model(self, logdir, exp_name):
+        path = osp.join(logdir,exp_name+".ckpt")
+        self.saver.restore(getsess(), path)
+        print("Model Restored from path", path)
 
 class RewardForwardFilter(object):
     def __init__(self, gamma):

@@ -427,6 +427,8 @@ def make_dm_suite(frame_stack=True,task = 'cheetah_run'):
     action_repeat = env_param["action_repeat"]
     max_length = env_param["max_length"]
     state_components = env_param["state_components"]
+    print('---MAX LENGTH---',max_length)
+    #assert 1==2
     env = dm_suite.ActionRepeat(env, action_repeat)
     #env = dm_suite.MaximumDuration(env, max_length)
     env = dm_suite.PixelObservations(env, (84, 84), np.uint8, 'image')
@@ -452,4 +454,3 @@ def make_robo_hockey(frame_stack=True):
         env = FrameStack(env, 4)
     env = AddRandomStateToInfo(env)
     return env
-

@@ -6,8 +6,9 @@ from utils import small_convnet, flatten_two_dims, unflatten_first_dim, getsess,
 
 
 class Dynamics(object):
-    def __init__(self, auxiliary_task, predict_from_pixels, feat_dim=None, scope='dynamics'):
+    def __init__(self, auxiliary_task, predict_from_pixels, feat_dim=None, scope='dynamics',env_kind='dm_suite'):
         self.scope = scope
+        self.continuous = True if env_kind == "dm_suite" else False
         self.auxiliary_task = auxiliary_task
         self.hidsize = self.auxiliary_task.hidsize
         self.feat_dim = feat_dim
@@ -41,11 +42,7 @@ class Dynamics(object):
         return x
 
     def get_loss(self):
-        #ac = tf.one_hot(self.ac, self.ac_space.n, axis=2)
-        ac = self.ac
-        #print('---------AC--------',self.ac)
-        #print('---------AC_SPACE--------',self.ac_space.n)
-        #print('------AC SHAPE--------',tf.shape(self.ac))
+        ac = self.ac if self.continuous else tf.one_hot(self.ac, self.ac_space.n, axis=2)
         sh = tf.shape(ac)
         #assert 1==2
         #print('-------SH----------',sh)

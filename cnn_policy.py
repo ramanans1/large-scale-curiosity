@@ -3,22 +3,21 @@ from baselines.common.distributions import make_pdtype
 #from baselines.common.tf_util import load_variables, save_variables
 import functools
 import os.path as osp
+import numpy as np
 
 from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim, get_session
 #RS: Seems like should work for continuous action spaces as well 
 
 class CnnPolicy(object):
     def __init__(self, ob_space, ac_space, hidsize,
-                 ob_mean, ob_std, feat_dim, layernormalize, nl, scope="policy"):
+                 ob_mean, ob_std, feat_dim, layernormalize, nl, scope="policy", ac_range=None):
         if layernormalize:
             print("Warning: policy is operating on top of layer-normed features. It might slow down the training.")
         self.layernormalize = layernormalize
         self.nl = nl
         self.ob_mean = ob_mean
         self.ob_std = ob_std
-        #self.sess = sess = get_session()
-        #self.save = functools.partial(save_variables,sess=sess)
-        #self.load = functools.partial(load_variables,sess=sess)
+        self.ac_range = ac_range
         with tf.variable_scope(scope):
             self.ob_space = ob_space
             self.ac_space = ac_space
@@ -67,20 +66,19 @@ class CnnPolicy(object):
         a, vpred, nlp = \
             getsess().run([self.a_samp, self.vpred, self.nlp_samp],
                           feed_dict={self.ph_ob: ob[:, None]})
-        return a[:, 0], vpred[:, 0], nlp[:, 0]
+        a_new = []
+        for i in a[:,0]:
+            tmp = np.clip(i,3*self.ac_range[0],3*self.ac_range[1])
+            a_new.append(tmp)
+        a_new = np.array(a_new)
+        return a_new, vpred[:, 0], nlp[:, 0]
 
     def get_ac_value_nlp_eval(self, ob):
         a, vpred, nlp = getsess().run([self.a_samp, self.vpred, self.nlp_samp],
                           feed_dict={self.ph_ob: ((ob,),)})
-        return a[:, 0], vpred[:, 0], nlp[:, 0]
-
-    def save_model(self, logdir, exp_name):
-        self.saver = tf.train.Saver()
-        path = osp.join(logdir,exp_name+".ckpt")
-        self.saver.save(getsess(), path)
-        print("Model saved to path",path)
-
-    def restore_model(self, logdir, exp_name):
-        path = osp.join(logdir,exp_name+".ckpt")
-        self.saver = tf.train.Saver()
-        self.saver.restore(getsess(), path)
+        a_new = []
+        for i in a[:,0]:
+            tmp = np.clip(i,3*self.ac_range[0],3*self.ac_range[1])
+            a_new.append(tmp)
+        a_new = np.array(a_new)
+        return a_new, vpred[:, 0], nlp[:, 0]
