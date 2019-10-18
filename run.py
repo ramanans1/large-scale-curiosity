@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import os
 
-os.environ["MUJOCO_GL"] = "osmesa"
-os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+os.environ["MUJOCO_GL"] = "glfw"
+#os.environ["PYOPENGL_PLATFORM"] = "osmesa"
 
 try:
     from OpenGL import GLU
@@ -31,12 +31,12 @@ import datetime
 import multiprocessing
 
 def start_experiment(**args):
-    make_env = partial(make_env_all_params, add_monitor=True, args=args)
-
+    log, tf_sess, ldir = get_experiment_environment(**args)
+    make_env = partial(make_env_all_params, add_monitor=True, args=args, logdir=ldir)
     trainer = Trainer(make_env=make_env,
                       num_timesteps=args['num_timesteps'], hps=args,
                       envs_per_process=args['envs_per_process'])
-    log, tf_sess = get_experiment_environment(**args)
+
     with log, tf_sess:
         logdir = logger.get_dir()
         print("results will be saved to ", logdir)
@@ -60,8 +60,7 @@ class Trainer(object):
             ob_mean=self.ob_mean,
             ob_std=self.ob_std,
             layernormalize=False,
-            nl=tf.nn.leaky_relu,
-            ac_range = [self.ac_space_min, self.ac_space_max])
+            nl=tf.nn.leaky_relu)
 
         self.feature_extractor = {"none": FeatureExtractor,
                                   "idf": InverseDynamics,
@@ -123,7 +122,7 @@ class Trainer(object):
             self.agent.restore_model(logdir = self.hps['ckptpath'], exp_name = self.hps['exp_name'])
         while True:
             info = self.agent.step()
-            #print(info)
+            #print('PRINTINFO',info)
             #assert 1==2
             if info['update']:
                 logger.logkvs(info['update'])
@@ -136,7 +135,7 @@ class Trainer(object):
         self.agent.stop_interaction()
 
 
-def make_env_all_params(rank, add_monitor, args):
+def make_env_all_params(rank, add_monitor, args, logdir):
     if args["env_kind"] == 'atari':
         env = gym.make(args['env'])
         assert 'NoFrameskip' in env.spec.id
@@ -158,7 +157,7 @@ def make_env_all_params(rank, add_monitor, args):
         elif args["env"] == "hockey":
             env = make_robo_hockey()
     elif args["env_kind"] == "dm_suite":
-        env = make_dm_suite(task=args["env"])
+        env = make_dm_suite(task=args["env"],logdir=logdir)
 
     if add_monitor:
         env = TempMonitor(env)
@@ -174,14 +173,13 @@ def get_experiment_environment(**args):
     process_seed = hash_seed(process_seed, max_bytes=4)
     set_global_seeds(process_seed)
     setup_mpi_gpus()
-
-    logger_context = logger.scoped_configure(dir='./'+args["logdir"]+'/' +
-                                                 datetime.datetime.now().strftime(args["expID"] + "-openai-%Y-%m-%d-%H-%M-%S-%f"),
+    logdir = './'+args["logdir"]+'/' + datetime.datetime.now().strftime(args["expID"] + "-openai-%Y-%m-%d-%H-%M-%S-%f")
+    logger_context = logger.scoped_configure(dir=logdir,
                                              format_strs=['stdout', 'log',
                                                           'csv', 'tensorboard']
                                              if MPI.COMM_WORLD.Get_rank() == 0 else ['log'])
     tf_context = setup_tensorflow_session()
-    return logger_context, tf_context
+    return logger_context, tf_context, logdir
 
 
 def add_environments_params(parser):

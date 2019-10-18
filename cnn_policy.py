@@ -1,23 +1,23 @@
 import tensorflow as tf
-from baselines.common.distributions import make_pdtype
+from distributions import make_pdtype
 #from baselines.common.tf_util import load_variables, save_variables
 import functools
 import os.path as osp
 import numpy as np
 
 from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim, get_session
-#RS: Seems like should work for continuous action spaces as well 
 
 class CnnPolicy(object):
     def __init__(self, ob_space, ac_space, hidsize,
-                 ob_mean, ob_std, feat_dim, layernormalize, nl, scope="policy", ac_range=None):
+                 ob_mean, ob_std, feat_dim, layernormalize, nl, scope="policy"):
         if layernormalize:
             print("Warning: policy is operating on top of layer-normed features. It might slow down the training.")
         self.layernormalize = layernormalize
+        self.bool_actionclip = True #TODO Need to make this flexible
         self.nl = nl
         self.ob_mean = ob_mean
         self.ob_std = ob_std
-        self.ac_range = ac_range
+        #self.ac_range = ac_range
         with tf.variable_scope(scope):
             self.ob_space = ob_space
             self.ac_space = ac_space
@@ -45,8 +45,12 @@ class CnnPolicy(object):
             self.vpred = unflatten_first_dim(vpred, sh)[:, :, 0]
             self.pd = pd = self.ac_pdtype.pdfromflat(pdparam)
             self.a_samp = pd.sample()
+            self.a_samp = self.clip_action(self.a_samp) if self.bool_actionclip else self.a_samp
             self.entropy = pd.entropy()
             self.nlp_samp = pd.neglogp(self.a_samp)
+            self.pd_logstd = pd.logstd
+            self.pd_std = pd.std
+            self.pd_mean = pd.mean
 
     def get_features(self, x, reuse):
         x_has_timesteps = (x.get_shape().ndims == 5)
@@ -62,23 +66,24 @@ class CnnPolicy(object):
             x = unflatten_first_dim(x, sh)
         return x
 
+    def clip_action(self,action):
+
+        forward = tf.stop_gradient(tf.clip_by_value(action, -7.0, 7.0))
+        action = action - tf.stop_gradient(action) + forward
+
+        return action
+
     def get_ac_value_nlp(self, ob):
-        a, vpred, nlp = \
-            getsess().run([self.a_samp, self.vpred, self.nlp_samp],
+        a, vpred, nlp, logstd, std, mean = \
+            getsess().run([self.a_samp, self.vpred, self.nlp_samp, self.pd_logstd, self.pd_std, self.pd_mean],
                           feed_dict={self.ph_ob: ob[:, None]})
-        a_new = []
-        for i in a[:,0]:
-            tmp = np.clip(i,3*self.ac_range[0],3*self.ac_range[1])
-            a_new.append(tmp)
-        a_new = np.array(a_new)
-        return a_new, vpred[:, 0], nlp[:, 0]
+        #print('---LOGSTD--',logstd[:,0])
+        #print('---STD--',std[:,0])
+        #print('---MEAN--',mean[:,0])
+        return a[:,0], vpred[:, 0], nlp[:, 0]
 
     def get_ac_value_nlp_eval(self, ob):
         a, vpred, nlp = getsess().run([self.a_samp, self.vpred, self.nlp_samp],
                           feed_dict={self.ph_ob: ((ob,),)})
-        a_new = []
-        for i in a[:,0]:
-            tmp = np.clip(i,3*self.ac_range[0],3*self.ac_range[1])
-            a_new.append(tmp)
-        a_new = np.array(a_new)
-        return a_new, vpred[:, 0], nlp[:, 0]
+
+        return a[:,0], vpred[:, 0], nlp[:, 0]

@@ -59,6 +59,15 @@ class PpoOptimizer(object):
             entropy = tf.reduce_mean(self.stochpol.pd.entropy())
             vpred = self.stochpol.vpred
 
+            self.pd_logstd_min = tf.math.reduce_min(self.stochpol.pd.logstd)
+            self.pd_logstd_max = tf.math.reduce_max(self.stochpol.pd.logstd)
+            self.pd_std_min = tf.math.reduce_min(self.stochpol.pd.std)
+            self.pd_std_max = tf.math.reduce_max(self.stochpol.pd.std)
+            self.pd_mean_min = tf.math.reduce_min(self.stochpol.pd.mean)
+            self.pd_mean_max = tf.math.reduce_max(self.stochpol.pd.mean)
+            self.stat_report = {'pd_logstd_max':self.pd_logstd_max,'pd_logstd_min': self.pd_logstd_min,
+            'pd_std_max': self.pd_std_max, 'pd_std_min':self.pd_std_min, 'pd_mean_max':self.pd_mean_max, 'pd_mean_min':self.pd_mean_min}
+
             vf_loss = 0.5 * tf.reduce_mean((vpred - self.ph_ret) ** 2)
             ratio = tf.exp(self.ph_oldnlp - neglogpac)  # p_new / p_old
             negadv = - self.ph_adv
@@ -72,7 +81,7 @@ class PpoOptimizer(object):
 
             self.total_loss = pg_loss + ent_loss + vf_loss
             self.to_report = {'tot': self.total_loss, 'pg': pg_loss, 'vf': vf_loss, 'ent': entropy,
-                              'approxkl': approxkl, 'clipfrac': clipfrac}
+                              'approxkl': approxkl, 'clipfrac': clipfrac}#, 'pd_logstd':pd_logstd, 'pd_std':pd_std, 'pd_mean':pd_mean}
 
     def start_interaction(self, env_fns, dynamics, nlump=2):
         self.loss_names, self._losses = zip(*list(self.to_report.items()))
@@ -87,16 +96,18 @@ class PpoOptimizer(object):
         #self.gshape = gs
         #gs = [g for (g,v) in gvs]
         #self.normg = tf.linalg.global_norm(gs)
-        #new_g = [tf.clip_by_norm(g,10.0) for g in gs]
+        #new_g = [tf.clip_by_norm(g,10.0) for g in gs i]
         #self.nnormg = tf.linalg.global_norm(new_g)
-        gradsandvars = trainer.compute_gradients(self.total_loss, params)
         def ClipIfNotNone(grad):
-            if grad is None:
-                return grad
-            return tf.clip_by_value(grad, -25, 25)
-        #new_g = [ClipIfNotNone(g) for (g,v) in gvs]
+            return tf.clip_by_value(grad,-25.0,25.0) if grad is not None else grad
+        gradsandvars = trainer.compute_gradients(self.total_loss, params)
+        #gs = [g for (g,v) in gradsandvars]
+        #new_g = [tf.clip_by_norm(g,10.0) for g in gs if g is not None]
+        gradsandvars = [(ClipIfNotNone(g),v) for g, v in gradsandvars]
+
+        #new_g = [g for (g,v) in gradsandvars]
         #self.nnormg = tf.linalg.global_norm(new_g)
-        gradsandvars = [(ClipIfNotNone(grad), var) for grad, var in gradsandvars]
+        #gradsandvars = [(ClipIfNotNone(grad), var) for grad, var in gradsandvars]
         self._train = trainer.apply_gradients(gradsandvars)
 
         if MPI.COMM_WORLD.Get_rank() == 0:
@@ -211,6 +222,8 @@ class PpoOptimizer(object):
         ])
         mblossvals = []
         #gradvals = []
+        statvals = []
+        self.stat_names, self.stats = zip(*list(self.stat_report.items()))
         for _ in range(self.nepochs):
             np.random.shuffle(envinds)
             for start in range(0, self.nenvs * self.nsegs_per_env, envsperbatch):
@@ -220,14 +233,16 @@ class PpoOptimizer(object):
                 fd.update({self.ph_lr: self.lr, self.ph_cliprange: self.cliprange})
                 mblossvals.append(getsess().run(self._losses + (self._train,), fd)[:-1])
                 #print(fd)
-                #print(tf.get_default_session().run([self.normg,self.nnormg], fd))
+                statvals.append(tf.get_default_session().run(self.stats, fd))
+
                 #_ = getsess().run(self.gradsandvars, fd)[:-1]
                 #assert 1==2
                 #gradvals.append(getsess().run(self.grads, fd))
 
-
         mblossvals = [mblossvals[0]]
+        statvals = [statvals[0]]
         info.update(zip(['opt_' + ln for ln in self.loss_names], np.mean([mblossvals[0]], axis=0)))
+        info.update(zip(['opt_' + ln for ln in self.stat_names], np.mean([statvals[0]], axis=0)))
         info["rank"] = MPI.COMM_WORLD.Get_rank()
         self.n_updates += 1
         info["n_updates"] = self.n_updates

@@ -419,7 +419,7 @@ def make_robo_pong(frame_stack=True):
     return env
 
 
-def make_dm_suite(frame_stack=True,task = 'cheetah_run'):
+def make_dm_suite(frame_stack=True,task = 'cheetah_run',logdir='./dm_suite_test'):
     from baselines.common.atari_wrappers import FrameStack
     import roboenvs as robo
     import roboenvs.dm_suite_envs as dm_suite
@@ -430,15 +430,15 @@ def make_dm_suite(frame_stack=True,task = 'cheetah_run'):
     print('---MAX LENGTH---',max_length)
     #assert 1==2
     env = dm_suite.ActionRepeat(env, action_repeat)
-    #env = dm_suite.MaximumDuration(env, max_length)
-    env = dm_suite.PixelObservations(env, (84, 84), np.uint8, 'image')
-    env = dm_suite.ConvertTo32Bit(env)
+    env = dm_suite.MaximumDuration(env, max_length)
+    env = dm_suite.PixelObservations(env, (64, 64), np.uint8, 'image')
+    env = dm_suite.ConvertTo32Bit(env,outdir=logdir)
     env = dm_suite.ConcatObservation(env, ['image'])
     #env = dm_suite.DiscretizeActionWrapper(env, 2)
     #env = dm_suite.MultiDiscreteToUsual(env)
-    env = OneChannel(env)
-    if frame_stack:
-       env = FrameStack(env, 4)
+    #env = OneChannel(env)
+    #if frame_stack:
+    #   env = FrameStack(env, 4)
     #env = AddRandomStateToInfo(env)
     return env
 

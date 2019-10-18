@@ -41,8 +41,8 @@ def make_robohockey():
 def make_cheetah_run():
     env_param = {}
     env_param["action_repeat"] = 4
-    #env_param["max_length"] = 1000 // env_param["action_repeat"]
-    env_param["max_length"] = 250
+    env_param["max_length"] = 1000 // env_param["action_repeat"]
+    #env_param["max_length"] = 250
     env_param["state_components"] = ['reward', 'position', 'velocity']
     env = gym.make("CheetahRun-v1")
     return env, env_param
@@ -50,8 +50,8 @@ def make_cheetah_run():
 def make_walker_walk():
     env_param = {}
     env_param["action_repeat"] = 2
-    #env_param["max_length"] = 1000 // env_param["action_repeat"]
-    env_param["max_length"] = 500
+    env_param["max_length"] = 1000 // env_param["action_repeat"]
+    #env_param["max_length"] = 500
     env_param["state_components"] = ['reward', 'height', 'orientations', 'velocity']
     env = gym.make("WalkerWalk-v1")
     return env,env_param

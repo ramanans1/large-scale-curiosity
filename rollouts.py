@@ -73,6 +73,7 @@ class Rollout(object):
         t = self.step_count % self.nsteps
         s = t % self.nsteps_per_seg
         ep_num = self.step_count // self.nsteps_per_seg
+        #print('-NLUMPS-',self.nlumps)
         for l in range(self.nlumps):
             obs, prevrews, news, infos = self.env_get(l)
             # if t > 0:
@@ -95,9 +96,10 @@ class Rollout(object):
             sli = slice(l * self.lump_stride, (l + 1) * self.lump_stride)
 
             acs, vpreds, nlps = self.policy.get_ac_value_nlp(obs)
-            #print('---ACS----',acs)
-            #print('--VPRED---',vpreds)
-            #print('--NLPS---',nlps)
+            # print('---ACS----',acs)
+            # print('--VPRED---',vpreds)
+            # print('--NLPS---',nlps)
+            #print("STEPPING, ROLLING")
             self.env_step(l, acs)
 
             # self.prev_feat[l] = dyn_feat

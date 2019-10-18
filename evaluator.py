@@ -45,14 +45,15 @@ class Evaluator(object):
             image_path = os.path.join(dirname,image_folder)
             os.makedirs(image_path, exist_ok=True)  # succeeds even if directory exists.
             vid_file = os.path.join(image_path, self.exp_name +"_{}_{}_".format(ep_num, i) + ".avi")
-            out = cv2.VideoWriter(vid_file,cv2.VideoWriter_fourcc(*'DIVX'), 15, (84,84))
+            out = cv2.VideoWriter(vid_file,cv2.VideoWriter_fourcc(*'DIVX'), 15, (64,64))
             for j in range(len(ep_images)):
                 image_file = os.path.join(dirname, image_folder, self.exp_name +"_{}_{}_{}_".format(ep_num, i, j) + ".png")
                 print('--EPLEN--',len(ep_images))
                 #assert 1==2
                 #print(ep_images[j])
                 #assert 1==2
-                out.write(ep_images[j])
+                tmp = cv2.cvtColor(ep_images[j], cv2.COLOR_RGB2BGR)
+                out.write(tmp)
                 #cv2.imwrite(image_file, ep_images[j])
             out.release()
             print("Episode {} cumulative reward: {}".format(i, sum(eprews)))
