@@ -1620,6 +1620,8 @@ class ConvertTo32Bit(object):
     transition = self._process_observ(observ).copy()
     transition['action'] = action
     transition['reward'] = reward
+    transition['done'] = done
+    transition['info'] info
     self._episode.append(transition)
     if done:
         episode = self._get_episode()

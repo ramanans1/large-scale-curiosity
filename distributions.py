@@ -206,7 +206,7 @@ class DiagGaussianPd(Pd):
         self.flat = flat
         mean, logstd = tf.split(axis=len(flat.shape)-1, num_or_size_splits=2, value=flat)
         self.mean = mean
-        self.logstd = tf.clip_by_value(logstd, 0, 4)
+        self.logstd = tf.clip_by_value(logstd, -250, 4)
         #print(self.logstd.get_shape())
         #assert 1==2
         #epsilon = tf.constant(1e-7,shape=self.logstd.get_shape())
