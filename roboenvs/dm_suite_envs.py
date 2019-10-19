@@ -1621,7 +1621,7 @@ class ConvertTo32Bit(object):
     transition['action'] = action
     transition['reward'] = reward
     transition['done'] = done
-    transition['info'] info
+    transition['info'] = info
     self._episode.append(transition)
     if done:
         episode = self._get_episode()
