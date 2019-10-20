@@ -1620,6 +1620,8 @@ class ConvertTo32Bit(object):
     transition = self._process_observ(observ).copy()
     transition['action'] = action
     transition['reward'] = reward
+    transition['done'] = done
+    transition['info'] = info
     self._episode.append(transition)
     if done:
         episode = self._get_episode()
@@ -1637,6 +1639,8 @@ class ConvertTo32Bit(object):
     transition = self._process_observ(observ).copy()
     transition['action'] = np.zeros_like(self.action_space.low)
     transition['reward'] = 0.0
+    transition['done'] = False
+    transition['info'] = {'discount': 1.0}
     self._episode = [transition]
     return observ
 
@@ -1656,7 +1660,7 @@ class ConvertTo32Bit(object):
     episode = {k: [t[k] for t in self._episode] for k in self._episode[0]}
     episode = {k: np.array(v) for k, v in episode.items()}
     for key, sequence in episode.items():
-        if sequence.dtype == 'object':
+        if sequence.dtype == 'object' and key != 'info':
             message = "Sequence '{}' is not numeric:\n{}"
             raise RuntimeError(message.format(key, sequence))
     return episode

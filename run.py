@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import yaml
 
 os.environ["MUJOCO_GL"] = "osmesa"
 os.environ["PYOPENGL_PLATFORM"] = "osmesa"
@@ -40,6 +41,8 @@ def start_experiment(**args):
     with log, tf_sess:
         logdir = logger.get_dir()
         print("results will be saved to ", logdir)
+        with open(os.path.join(logdir,'run_config.yaml'),'w') as outfile:
+            yaml.dump(args,outfile,default_flow_style=False)
         trainer.train()
 
 
