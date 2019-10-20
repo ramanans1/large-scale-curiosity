@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import os
 
-os.environ["MUJOCO_GL"] = "glfw"
-#os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+os.environ["MUJOCO_GL"] = "osmesa"
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
 
 try:
     from OpenGL import GLU
@@ -127,7 +127,7 @@ class Trainer(object):
             if info['update']:
                 logger.logkvs(info['update'])
                 logger.dumpkvs()
-                if info['update']['n_updates'] % 5 == 0:
+                if info['update']['n_updates'] % 30 == 0:
                     self.agent.save_model(logdir = logger.get_dir(), exp_name = self.hps['exp_name'], global_step = info['update']['n_updates'])
             if self.agent.rollout.stats['tcount'] > self.num_timesteps:
                 break
