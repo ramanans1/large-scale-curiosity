@@ -10,7 +10,7 @@ from evaluator import Evaluator
 
 class Rollout(object):
     def __init__(self, ob_space, ac_space, nenvs, nsteps_per_seg, nsegs_per_env, nlumps, envs, policy,
-                 int_rew_coeff, ext_rew_coeff, record_rollouts, dynamics, exp_name, env_name):
+                 int_rew_coeff, ext_rew_coeff, record_rollouts, dynamics_list, exp_name, env_name):
         self.nenvs = nenvs
         self.nsteps_per_seg = nsteps_per_seg
         self.nsegs_per_env = nsegs_per_env
@@ -21,7 +21,7 @@ class Rollout(object):
         self.lump_stride = nenvs // self.nlumps
         self.envs = envs
         self.policy = policy
-        self.dynamics = dynamics
+        self.dynamics_list = dynamics_list
         self.exp_name = exp_name
         self.env_name = env_name
 
@@ -64,10 +64,35 @@ class Rollout(object):
         self.update_info()
 
     def calculate_reward(self):
-        int_rew = self.dynamics.calculate_loss(ob=self.buf_obs,
-                                               last_ob=self.buf_obs_last,
-                                               acs=self.buf_acs)
-        self.buf_rews[:] = self.reward_fun(int_rew=int_rew, ext_rew=self.buf_ext_rews)
+        # int_rew = self.dynamics.calculate_loss(ob=self.buf_obs,
+        #                                        last_ob=self.buf_obs_last,
+        #                                        acs=self.buf_acs)
+        # self.buf_rews[:] = self.reward_fun(int_rew=int_rew, ext_rew=self.buf_ext_rews)
+        int_rew = []
+        if self.dynamics_list[0].var_output:
+            net_output = []
+            for dynamics in self.dynamics_list:
+                net_output.append(dynamics.calculate_loss(ob=self.buf_obs,
+                                                          last_ob=self.buf_obs_last,
+                                                          acs=self.buf_acs))
+
+            # cal variance along first dimension .. [n_dyna, n_env, n_step, feature_size]
+            # --> [n_env, n_step,feature_size]
+            var_output = np.var(net_output, axis=0)
+
+            # cal reward by mean along second dimension .. [n_env, n_step, feature_size] --> [n_env, n_step]
+            var_rew = np.mean(var_output, axis=-1)
+        else:
+            for dynamics in self.dynamics_list:
+                int_rew.append(dynamics.calculate_loss(ob=self.buf_obs,
+                                                       last_ob=self.buf_obs_last,
+                                                       acs=self.buf_acs))
+
+            # calculate the variance of the rew
+            var_rew = np.var(int_rew, axis=0)
+
+        self.buf_rews[:] = self.reward_fun(int_rew=var_rew, ext_rew=self.buf_ext_rews)
+
 
     def rollout_step(self):
         t = self.step_count % self.nsteps

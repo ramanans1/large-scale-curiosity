@@ -24,8 +24,8 @@ class PpoOptimizer(object):
                  ent_coef, gamma, lam, nepochs, lr, cliprange,
                  nminibatches,
                  normrew, normadv, use_news, ext_coeff, int_coeff,
-                 nsteps_per_seg, nsegs_per_env, dynamics, exp_name, env_name):
-        self.dynamics = dynamics
+                 nsteps_per_seg, nsegs_per_env, dynamics_list, exp_name, env_name):
+        self.dynamics_list = dynamics_list
         self.exp_name = exp_name
         self.env_name = env_name
         with tf.variable_scope(scope):
@@ -83,7 +83,7 @@ class PpoOptimizer(object):
             self.to_report = {'tot': self.total_loss, 'pg': pg_loss, 'vf': vf_loss, 'ent': entropy,
                               'approxkl': approxkl, 'clipfrac': clipfrac}#, 'pd_logstd':pd_logstd, 'pd_std':pd_std, 'pd_mean':pd_mean}
 
-    def start_interaction(self, env_fns, dynamics, nlump=2):
+    def start_interaction(self, env_fns, dynamics_list, nlump=2):
         self.loss_names, self._losses = zip(*list(self.to_report.items()))
 
         params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -138,7 +138,7 @@ class PpoOptimizer(object):
                                int_rew_coeff=self.int_coeff,
                                ext_rew_coeff=self.ext_coeff,
                                record_rollouts=self.use_recorder,
-                               dynamics=dynamics, exp_name = self.exp_name, env_name = self.env_name)
+                               dynamics_list=dynamics_list, exp_name = self.exp_name, env_name = self.env_name)
 
         self.buf_advs = np.zeros((nenvs, self.rollout.nsteps), np.float32)
         self.buf_rets = np.zeros((nenvs, self.rollout.nsteps), np.float32)
@@ -217,7 +217,7 @@ class PpoOptimizer(object):
             (self.ph_adv, resh(self.buf_advs)),
         ]
         ph_buf.extend([
-            (self.dynamics.last_ob,
+            (self.dynamics_list[0].last_ob,
              self.rollout.buf_obs_last.reshape([self.nenvs * self.nsegs_per_env, 1, *self.ob_space.shape]))
         ])
         mblossvals = []

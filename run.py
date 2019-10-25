@@ -36,7 +36,9 @@ def start_experiment(**args):
     make_env = partial(make_env_all_params, add_monitor=True, args=args, logdir=ldir)
     trainer = Trainer(make_env=make_env,
                       num_timesteps=args['num_timesteps'], hps=args,
-                      envs_per_process=args['envs_per_process'])
+                      envs_per_process=args['envs_per_process'],
+                      num_dyna=args['num_dynamics'],
+                      var_output=args['var_output'])
 
     with log, tf_sess:
         logdir = logger.get_dir()
@@ -47,7 +49,7 @@ def start_experiment(**args):
 
 
 class Trainer(object):
-    def __init__(self, make_env, hps, num_timesteps, envs_per_process):
+    def __init__(self, make_env, hps, num_timesteps, envs_per_process, num_dyna, var_output):
         self.make_env = make_env
         self.hps = hps
         self.envs_per_process = envs_per_process
@@ -75,10 +77,17 @@ class Trainer(object):
                                                         feat_dim=512,
                                                         layernormalize=hps['layernorm'])
 
-        self.dynamics = Dynamics if hps['feat_learning'] != 'pix2pix' else UNet
-        self.dynamics = self.dynamics(auxiliary_task=self.feature_extractor,
-                                      predict_from_pixels=hps['dyn_from_pixels'],
-                                      feat_dim=512, env_kind=hps['env_kind'])
+        self.dynamics_class = Dynamics if hps['feat_learning'] != 'pix2pix' else UNet
+
+        #create dynamics list
+        self.dynamics_list = []
+        for i in range(num_dyna):
+            self.dynamics_list.append(self.dynamics_class(auxiliary_task=self.feature_extractor,
+                                          predict_from_pixels=hps['dyn_from_pixels'],
+                                          feat_dim=512, env_kind=hps['env_kind'],
+                                          scope='dynamics_{}'.format(i),
+                                          var_output=var_output)
+                                      )
 
         self.agent = PpoOptimizer(
             scope='ppo',
@@ -99,14 +108,18 @@ class Trainer(object):
             normadv=hps['norm_adv'],
             ext_coeff=hps['ext_coeff'],
             int_coeff=hps['int_coeff'],
-            dynamics=self.dynamics,
+            dynamics_list=self.dynamics_list,
             exp_name = hps['exp_name'],
             env_name = hps['env']
         )
 
         self.agent.to_report['aux'] = tf.reduce_mean(self.feature_extractor.loss)
         self.agent.total_loss += self.agent.to_report['aux']
-        self.agent.to_report['dyn_loss'] = tf.reduce_mean(self.dynamics.loss)
+        
+        self.agent.to_report['dyn_loss'] = tf.reduce_mean(self.dynamics_list[0].partial_loss)
+        for i in range(1,num_dyna):
+            self.agent.to_report['dyn_loss'] += tf.reduce_mean(self.dynamics_list[i].partial_loss)
+
         self.agent.total_loss += self.agent.to_report['dyn_loss']
         self.agent.to_report['feat_var'] = tf.reduce_mean(tf.nn.moments(self.feature_extractor.features, [0, 1])[1])
 
@@ -120,7 +133,7 @@ class Trainer(object):
         self.envs = [functools.partial(self.make_env, i) for i in range(self.envs_per_process)]
 
     def train(self):
-        self.agent.start_interaction(self.envs, nlump=self.hps['nlumps'], dynamics=self.dynamics)
+        self.agent.start_interaction(self.envs, nlump=self.hps['nlumps'], dynamics_list=self.dynamics_list)
         if self.hps['ckptpath'] is not None:
             self.agent.restore_model(logdir = self.hps['ckptpath'], exp_name = self.hps['exp_name'])
         while True:
@@ -232,6 +245,8 @@ if __name__ == '__main__':
     parser.add_argument('--expID',type=str,default='0001')
     parser.add_argument('--logdir',type=str,default='logs')
     parser.add_argument('--ckptpath',type=str,default=None)
+    parser.add_argument('--num_dynamics', type=int, default=5)
+    parser.add_argument('--var_output', action='store_true', default=True)
 
     args = parser.parse_args()
 
