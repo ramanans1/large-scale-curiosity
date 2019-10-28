@@ -101,7 +101,8 @@ class Trainer(object):
             int_coeff=hps['int_coeff'],
             dynamics=self.dynamics,
             exp_name = hps['exp_name'],
-            env_name = hps['env']
+            env_name = hps['env'],
+            to_eval = hps['eval']
         )
 
         self.agent.to_report['aux'] = tf.reduce_mean(self.feature_extractor.loss)
@@ -160,7 +161,7 @@ def make_env_all_params(rank, add_monitor, args, logdir):
         elif args["env"] == "hockey":
             env = make_robo_hockey()
     elif args["env_kind"] == "dm_suite":
-        env = make_dm_suite(task=args["env"],logdir=logdir)
+        env = make_dm_suite(task=args["env"],logdir=logdir, to_record=args["to_record"])
 
     if add_monitor:
         env = TempMonitor(env)
@@ -232,6 +233,8 @@ if __name__ == '__main__':
     parser.add_argument('--expID',type=str,default='0001')
     parser.add_argument('--logdir',type=str,default='logs')
     parser.add_argument('--ckptpath',type=str,default=None)
+    parser.add_argument('--eval', type=int, default=1)
+    parser.add_argument('--to_record', type=int, default=1)
 
     args = parser.parse_args()
 

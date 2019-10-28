@@ -24,10 +24,11 @@ class PpoOptimizer(object):
                  ent_coef, gamma, lam, nepochs, lr, cliprange,
                  nminibatches,
                  normrew, normadv, use_news, ext_coeff, int_coeff,
-                 nsteps_per_seg, nsegs_per_env, dynamics, exp_name, env_name):
+                 nsteps_per_seg, nsegs_per_env, dynamics, exp_name, env_name, to_eval):
         self.dynamics = dynamics
         self.exp_name = exp_name
         self.env_name = env_name
+        self.to_eval = to_eval
         with tf.variable_scope(scope):
             self.use_recorder = True
             self.n_updates = 0
@@ -138,7 +139,7 @@ class PpoOptimizer(object):
                                int_rew_coeff=self.int_coeff,
                                ext_rew_coeff=self.ext_coeff,
                                record_rollouts=self.use_recorder,
-                               dynamics=dynamics, exp_name = self.exp_name, env_name = self.env_name)
+                               dynamics=dynamics, exp_name = self.exp_name, env_name = self.env_name, to_eval = self.to_eval)
 
         self.buf_advs = np.zeros((nenvs, self.rollout.nsteps), np.float32)
         self.buf_rets = np.zeros((nenvs, self.rollout.nsteps), np.float32)

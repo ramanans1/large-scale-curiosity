@@ -419,7 +419,7 @@ def make_robo_pong(frame_stack=True):
     return env
 
 
-def make_dm_suite(frame_stack=True,task = 'cheetah_run',logdir='./dm_suite_test'):
+def make_dm_suite(frame_stack=True,task = 'cheetah_run',logdir='./dm_suite_test', to_record=1):
     from baselines.common.atari_wrappers import FrameStack
     import roboenvs as robo
     import roboenvs.dm_suite_envs as dm_suite
@@ -432,7 +432,7 @@ def make_dm_suite(frame_stack=True,task = 'cheetah_run',logdir='./dm_suite_test'
     env = dm_suite.ActionRepeat(env, action_repeat)
     env = dm_suite.MaximumDuration(env, max_length)
     env = dm_suite.PixelObservations(env, (64, 64), np.uint8, 'image')
-    env = dm_suite.ConvertTo32Bit(env,outdir=logdir)
+    env = dm_suite.ConvertTo32Bit(env,outdir=logdir, to_record=to_record)
     env = dm_suite.ConcatObservation(env, ['image'])
     #env = dm_suite.DiscretizeActionWrapper(env, 2)
     #env = dm_suite.MultiDiscreteToUsual(env)

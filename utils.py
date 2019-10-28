@@ -154,17 +154,17 @@ def small_convnet(x, nl, feat_dim, last_nl, layernormalize, batchnorm=False):
 
 
 def small_deconvnet(z, nl, ch, positional_bias):
-    sh = (8, 8, 64)
+    sh = (6, 6, 112)
     z = fc(z, np.prod(sh), activation=nl)
     z = tf.reshape(z, (-1, *sh))
     z = tf.layers.conv2d_transpose(z, 128, kernel_size=4, strides=(2, 2), activation=nl, padding='same')
-    assert z.get_shape().as_list()[1:3] == [16, 16]
+    assert z.get_shape().as_list()[1:3] == [12, 12]
     z = tf.layers.conv2d_transpose(z, 64, kernel_size=8, strides=(2, 2), activation=nl, padding='same')
-    assert z.get_shape().as_list()[1:3] == [32, 32]
-    z = tf.layers.conv2d_transpose(z, ch, kernel_size=8, strides=(3, 3), activation=None, padding='same')
-    assert z.get_shape().as_list()[1:3] == [96, 96]
-    z = z[:, 6:-6, 6:-6]
-    assert z.get_shape().as_list()[1:3] == [84, 84]
+    assert z.get_shape().as_list()[1:3] == [24, 24]
+    z = tf.layers.conv2d_transpose(z, 3, kernel_size=8, strides=(3, 3), activation=None, padding='same')
+    assert z.get_shape().as_list()[1:3] == [72, 72]
+    z = z[:, 4:-4, 4:-4]
+    assert z.get_shape().as_list()[1:3] == [64, 64]
     if positional_bias:
         z = add_pos_bias(z)
     return z
