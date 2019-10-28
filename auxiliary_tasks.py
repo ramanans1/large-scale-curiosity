@@ -111,7 +111,7 @@ class VAE(FeatureExtractor):
             reconstruction_distribution = self.decoder(posterior_sample)
             norm_obs = self.add_noise_and_normalize(self.obs)
             reconstruction_likelihood = reconstruction_distribution.log_prob(norm_obs)
-            assert reconstruction_likelihood.get_shape().as_list()[2:] == [84, 84, 4]
+            assert reconstruction_likelihood.get_shape().as_list()[2:] == [64, 64, 3]
             reconstruction_likelihood = tf.reduce_sum(reconstruction_likelihood, [2, 3, 4])
 
             likelihood_lower_bound = reconstruction_likelihood - posterior_kl

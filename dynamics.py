@@ -74,7 +74,7 @@ class Dynamics(object):
 
     def calculate_loss(self, ob, last_ob, acs):
         print('-------INSIDE CALCULATE LOSS------')
-        n_chunks = 1
+        n_chunks = 8
         n = ob.shape[0]
         print(n)
         #assert 1==2
