@@ -277,7 +277,7 @@ class PpoOptimizer(object):
         print("Model saved to path",path)
 
     def restore_model(self, logdir, exp_name):
-        path = osp.join(logdir,exp_name+".ckpt")
+        path = logdir
         self.saver.restore(getsess(), path)
         print("Model Restored from path", path)
 
