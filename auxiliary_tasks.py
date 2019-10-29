@@ -64,7 +64,7 @@ class InverseDynamics(FeatureExtractor):
             sh = tf.shape(x)
             x = flatten_two_dims(x)
             x = fc(x, units=self.policy.hidsize, activation=activ)
-            x = fc(x, units=self.ac_space.n, activation=None)
+            x = fc(x, units=self.policy.ac_pdtype.param_shape()[0], activation=None)
             param = unflatten_first_dim(x, sh)
             idfpd = self.policy.ac_pdtype.pdfromflat(param)
             return idfpd.neglogp(self.ac)
