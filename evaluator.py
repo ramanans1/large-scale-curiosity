@@ -1,7 +1,7 @@
 from wrappers import ProcessFrame84, make_dm_suite
 from baselines.common.atari_wrappers import FrameStack
 from baselines.common.distributions import make_pdtype
-from baselines import logger
+import logger
 import numpy as np
 from cnn_policy import CnnPolicy
 import cv2

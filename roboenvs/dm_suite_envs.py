@@ -959,7 +959,7 @@ from __future__ import print_function
 
 import collections
 
-from baselines import logger
+import logger
 import numpy as np
 import gym
 from dm_control import suite
