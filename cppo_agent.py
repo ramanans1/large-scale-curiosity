@@ -235,7 +235,6 @@ class PpoOptimizer(object):
                 mblossvals.append(getsess().run(self._losses + (self._train,), fd)[:-1])
                 #print(fd)
                 statvals.append(tf.get_default_session().run(self.stats, fd))
-
                 #_ = getsess().run(self.gradsandvars, fd)[:-1]
                 #assert 1==2
                 #gradvals.append(getsess().run(self.grads, fd))
@@ -245,6 +244,7 @@ class PpoOptimizer(object):
         info.update(zip(['opt_' + ln for ln in self.loss_names], np.mean([mblossvals[0]], axis=0)))
         info.update(zip(['opt_' + ln for ln in self.stat_names], np.mean([statvals[0]], axis=0)))
         info["rank"] = MPI.COMM_WORLD.Get_rank()
+        info['video_log'] = self.rollout.buf_obs if self.n_updates%50==0 else None 
         self.n_updates += 1
         info["n_updates"] = self.n_updates
         info.update({dn: (np.mean(dvs) if len(dvs) > 0 else 0) for (dn, dvs) in self.rollout.statlists.items()})
