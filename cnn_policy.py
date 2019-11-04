@@ -39,7 +39,7 @@ class CnnPolicy(object):
             with tf.variable_scope(scope, reuse=False):
                 x = fc(self.flat_features, units=hidsize, activation=activ)
                 x = fc(x, units=hidsize, activation=activ)
-                pdparam = fc(x, name='pd', units=pdparamsize, activation=None)
+                pdparam = fc(x, name='pd', units=pdparamsize, activation=tf.nn.tanh)
                 vpred = fc(x, name='value_function_output', units=1, activation=None)
             pdparam = unflatten_first_dim(pdparam, sh)
             self.vpred = unflatten_first_dim(vpred, sh)[:, :, 0]
