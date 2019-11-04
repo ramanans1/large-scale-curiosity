@@ -15,7 +15,7 @@ from functools import partial
 
 import gym
 import tensorflow as tf
-from baselines import logger
+import logger
 from baselines.bench import Monitor
 from baselines.common.atari_wrappers import NoopResetEnv, FrameStack
 from mpi4py import MPI
@@ -126,8 +126,6 @@ class Trainer(object):
             self.agent.restore_model(logdir = self.hps['ckptpath'], exp_name = self.hps['exp_name'])
         while True:
             info = self.agent.step()
-            #print('PRINTINFO',info)
-            #assert 1==2
             if info['update']:
                 logger.logkvs(info['update'])
                 logger.dumpkvs()
