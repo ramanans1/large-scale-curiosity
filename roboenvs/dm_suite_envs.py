@@ -1044,6 +1044,7 @@ class DeepMindWrapper(gym.Env):
   def __init__(self, env, render_size=(64, 64), camera_id=0):
     self._env = env
     self._render_size = render_size
+    self._env.physics._data._model.njmax = 50
     print('------INSIDE DMWRAPPER-----',*self._render_size)
     self._camera_id = camera_id
 
