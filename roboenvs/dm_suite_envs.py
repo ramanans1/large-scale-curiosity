@@ -959,7 +959,7 @@ from __future__ import print_function
 
 import collections
 
-import logger 
+import logger
 import numpy as np
 import gym
 from dm_control import suite
@@ -1583,6 +1583,7 @@ class ConvertTo32Bit(object):
   def __init__(self, env, outdir='./curious_planet', to_record=1):
     self._env = env
     self._outdir = os.path.join(outdir,'curious_planet')
+    self._torecord = to_record
     self._episode = None
     self._epcount = 0
 
