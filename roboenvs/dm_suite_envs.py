@@ -959,7 +959,7 @@ from __future__ import print_function
 
 import collections
 
-from baselines import logger
+import logger 
 import numpy as np
 import gym
 from dm_control import suite
@@ -1580,7 +1580,7 @@ class CollectGymDataset(object):
 
 class ConvertTo32Bit(object):
   """Convert data types of an OpenAI Gym environment to 32 bit."""
-  def __init__(self, env, outdir='./curious_planet'):
+  def __init__(self, env, outdir='./curious_planet', to_record=1):
     self._env = env
     self._outdir = os.path.join(outdir,'curious_planet')
     self._episode = None
@@ -1627,7 +1627,7 @@ class ConvertTo32Bit(object):
         episode = self._get_episode()
         # info['episode'] = episode
         if self._epcount % 32 ==0:
-            if self._outdir:
+            if self._outdir and self._torecord:
                 filename = self._get_filename()
                 self._write(episode, filename)
         self._epcount += 1

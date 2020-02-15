@@ -10,7 +10,7 @@ from evaluator import Evaluator
 
 class Rollout(object):
     def __init__(self, ob_space, ac_space, nenvs, nsteps_per_seg, nsegs_per_env, nlumps, envs, policy,
-                 int_rew_coeff, ext_rew_coeff, record_rollouts, dynamics_list, exp_name, env_name):
+                 int_rew_coeff, ext_rew_coeff, record_rollouts, dynamics, exp_name, env_name, to_eval):
         self.nenvs = nenvs
         self.nsteps_per_seg = nsteps_per_seg
         self.nsegs_per_env = nsegs_per_env
@@ -24,6 +24,7 @@ class Rollout(object):
         self.dynamics_list = dynamics_list
         self.exp_name = exp_name
         self.env_name = env_name
+        self.to_eval = to_eval
 
         self.reward_fun = lambda ext_rew, int_rew: ext_rew_coeff * np.clip(ext_rew, -1., 1.) + int_rew_coeff * int_rew
         self.evaluator = Evaluator(env_name, 1, exp_name, policy)
@@ -164,8 +165,9 @@ class Rollout(object):
                     #
                     # self.int_rew[sli] = int_rew
                     # self.buf_rews[sli, t] = self.reward_fun(ext_rew=ext_rews, int_rew=int_rew)
-            if ep_num % 50 == 0 or ep_num == 865:
-                self.evaluator.eval_model(ep_num)
+            if self.to_eval:
+                if ep_num % 50 == 0 or ep_num == 865:
+                    self.evaluator.eval_model(ep_num)
             print("Episode {}".format(ep_num))
 
     def update_info(self):

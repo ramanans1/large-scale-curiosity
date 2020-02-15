@@ -64,7 +64,7 @@ class InverseDynamics(FeatureExtractor):
             sh = tf.shape(x)
             x = flatten_two_dims(x)
             x = fc(x, units=self.policy.hidsize, activation=activ)
-            x = fc(x, units=self.ac_space.n, activation=None)
+            x = fc(x, units=self.policy.ac_pdtype.param_shape()[0], activation=tf.nn.tanh)
             param = unflatten_first_dim(x, sh)
             idfpd = self.policy.ac_pdtype.pdfromflat(param)
             return idfpd.neglogp(self.ac)
@@ -111,7 +111,7 @@ class VAE(FeatureExtractor):
             reconstruction_distribution = self.decoder(posterior_sample)
             norm_obs = self.add_noise_and_normalize(self.obs)
             reconstruction_likelihood = reconstruction_distribution.log_prob(norm_obs)
-            assert reconstruction_likelihood.get_shape().as_list()[2:] == [84, 84, 4]
+            assert reconstruction_likelihood.get_shape().as_list()[2:] == [64, 64, 3]
             reconstruction_likelihood = tf.reduce_sum(reconstruction_likelihood, [2, 3, 4])
 
             likelihood_lower_bound = reconstruction_likelihood - posterior_kl

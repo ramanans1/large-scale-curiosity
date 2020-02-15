@@ -24,10 +24,11 @@ class PpoOptimizer(object):
                  ent_coef, gamma, lam, nepochs, lr, cliprange,
                  nminibatches,
                  normrew, normadv, use_news, ext_coeff, int_coeff,
-                 nsteps_per_seg, nsegs_per_env, dynamics_list, exp_name, env_name):
+                 nsteps_per_seg, nsegs_per_env, dynamics, exp_name, env_name, to_eval):
         self.dynamics_list = dynamics_list
         self.exp_name = exp_name
         self.env_name = env_name
+        self.to_eval = to_eval
         with tf.variable_scope(scope):
             self.use_recorder = True
             self.n_updates = 0
@@ -138,7 +139,7 @@ class PpoOptimizer(object):
                                int_rew_coeff=self.int_coeff,
                                ext_rew_coeff=self.ext_coeff,
                                record_rollouts=self.use_recorder,
-                               dynamics_list=dynamics_list, exp_name = self.exp_name, env_name = self.env_name)
+                               dynamics=dynamics_list, exp_name = self.exp_name, env_name = self.env_name, to_eval = self.to_eval)
 
         self.buf_advs = np.zeros((nenvs, self.rollout.nsteps), np.float32)
         self.buf_rets = np.zeros((nenvs, self.rollout.nsteps), np.float32)
@@ -244,6 +245,7 @@ class PpoOptimizer(object):
         info.update(zip(['opt_' + ln for ln in self.loss_names], np.mean([mblossvals[0]], axis=0)))
         info.update(zip(['opt_' + ln for ln in self.stat_names], np.mean([statvals[0]], axis=0)))
         info["rank"] = MPI.COMM_WORLD.Get_rank()
+        info['video_log'] = self.rollout.buf_obs if self.n_updates%50==0 else None 
         self.n_updates += 1
         info["n_updates"] = self.n_updates
         info.update({dn: (np.mean(dvs) if len(dvs) > 0 else 0) for (dn, dvs) in self.rollout.statlists.items()})
@@ -276,7 +278,7 @@ class PpoOptimizer(object):
         print("Model saved to path",path)
 
     def restore_model(self, logdir, exp_name):
-        path = osp.join(logdir,exp_name+".ckpt")
+        path = logdir
         self.saver.restore(getsess(), path)
         print("Model Restored from path", path)
 

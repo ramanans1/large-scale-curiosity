@@ -15,7 +15,7 @@ from functools import partial
 
 import gym
 import tensorflow as tf
-from baselines import logger
+import logger
 from baselines.bench import Monitor
 from baselines.common.atari_wrappers import NoopResetEnv, FrameStack
 from mpi4py import MPI
@@ -110,12 +110,13 @@ class Trainer(object):
             int_coeff=hps['int_coeff'],
             dynamics_list=self.dynamics_list,
             exp_name = hps['exp_name'],
-            env_name = hps['env']
+            env_name = hps['env'],
+            to_eval = hps['eval']
         )
 
         self.agent.to_report['aux'] = tf.reduce_mean(self.feature_extractor.loss)
         self.agent.total_loss += self.agent.to_report['aux']
-        
+
         self.agent.to_report['dyn_loss'] = tf.reduce_mean(self.dynamics_list[0].partial_loss)
         for i in range(1,num_dyna):
             self.agent.to_report['dyn_loss'] += tf.reduce_mean(self.dynamics_list[i].partial_loss)
@@ -143,7 +144,7 @@ class Trainer(object):
             if info['update']:
                 logger.logkvs(info['update'])
                 logger.dumpkvs()
-                if info['update']['n_updates'] % 5 == 0:
+                if info['update']['n_updates'] % 60 == 0:
                     self.agent.save_model(logdir = logger.get_dir(), exp_name = self.hps['exp_name'], global_step = info['update']['n_updates'])
             if self.agent.rollout.stats['tcount'] > self.num_timesteps:
                 break
@@ -173,8 +174,7 @@ def make_env_all_params(rank, add_monitor, args, logdir):
         elif args["env"] == "hockey":
             env = make_robo_hockey()
     elif args["env_kind"] == "dm_suite":
-        env = make_dm_suite(task=args["env"],logdir=logdir)
-
+        env = make_dm_suite(task=args["env"],logdir=logdir, to_record=args["to_record"])
     if add_monitor:
         env = TempMonitor(env)
 
@@ -247,6 +247,8 @@ if __name__ == '__main__':
     parser.add_argument('--ckptpath',type=str,default=None)
     parser.add_argument('--num_dynamics', type=int, default=5)
     parser.add_argument('--var_output', action='store_true', default=True)
+    parser.add_argument('--eval', type=int, default=1)
+    parser.add_argument('--to_record', type=int, default=1)
 
     args = parser.parse_args()
 
