@@ -2,8 +2,8 @@
 import os
 import yaml
 
-os.environ["MUJOCO_GL"] = "glfw"
-#os.environ["PYOPENGL_PLATFORM"] = "osmesa"
+os.environ["MUJOCO_GL"] = "osmesa"
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
 
 try:
     from OpenGL import GLU
